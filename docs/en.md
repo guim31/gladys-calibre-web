@@ -1,61 +1,122 @@
-# Demo Devices Template
+# Calibre-Web
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+Connect your [Calibre-Web](https://github.com/janeczku/calibre-web) library
+(the web front end of a Calibre e-book library, self-hosted) to Gladys: the
+number of books, authors and series, the last book added, the latest additions
+with their covers on the dashboard, and a scene event for every new book.
+[Calibre-Web Automated](https://github.com/crocodilestick/calibre-web-automated)
+works the same way.
 
-## What you get
+The integration was tested against real Calibre-Web 0.6.27 and Calibre-Web
+Automated servers (their Docker images), not yet in a real Gladys installation:
+feedback welcome on the [Gladys forum](https://community.gladysassistant.com)
+or in the [issues](https://github.com/guim31/gladys-calibre-web/issues).
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+## Requirements
 
-## Configuration
+- Gladys Assistant 5.1.0 or later.
+- A **Calibre-Web** or **Calibre-Web Automated** server reachable from Gladys,
+  on your network (or behind a reverse proxy).
+- A **Calibre-Web user** and its password. The integration reads the OPDS
+  catalog of Calibre-Web as this user: it sees the books this user sees. A
+  reader account is enough; a dedicated account is a good idea. If anonymous
+  browsing is enabled on the server, the user can stay empty.
+- In the settings of this user, the **Recently added** list must stay visible
+  (it is by default).
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+## Setup
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+1. Install the integration from the Gladys catalog.
+2. In **Configuration**, enter the **Server URL** with its port (for example
+   `http://192.168.1.20:8083`; behind a reverse proxy,
+   `https://example.org/books`), the **User** and the **Password**.
+3. If you wish, choose how often the server is read (every 5 minutes by
+   default) and the language of the names.
+4. Save, then click **Test the connection**: it shows the server
+   (Calibre-Web or Calibre-Web Automated), the user and the counts it finds.
+5. In the **Discovery** tab, add the **Calibre-Web** device.
 
-## Actions
+## Device
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+**Calibre-Web** (one device for the server, seen through the configured user):
 
-## Scenes
+| Feature             | Meaning                                                     |
+| ------------------- | ----------------------------------------------------------- |
+| **Online**          | 1 while the integration reads the server                    |
+| **Books**           | books of the library                                        |
+| **Authors**         | authors with at least one book                              |
+| **Series**          | series with at least one book                               |
+| **Last book added** | title and authors of the last book added ("Title — Author") |
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
-
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+If the author or series list is hidden for the user (Calibre-Web user
+settings), its count stays empty.
 
 ## Dashboard
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+- **Calibre-Web: recently added**: a grid of the last 12 books added, with
+  their covers and authors, and the number of books and authors. The setting
+  **Show the book and author counts** hides the two figures.
+
+## Scenes
+
+### Triggers
+
+- **New book added**: a new book appears in the Calibre library (uploaded in
+  Calibre-Web, added with Calibre, or ingested by Calibre-Web Automated).
+  Filter: the author, exactly as shown in Calibre-Web (several authors:
+  `Author One, Author Two`). Information: book title, author(s).
+
+Nothing is announced at the first start: the books already in the library are
+the starting point.
+
+### Actions
+
+- **Read the latest Calibre-Web additions**: a sentence for a notification or a
+  speaker, for example _"2 new book(s) on Calibre-Web in the last 7 days: Pride
+  and Prejudice (Jane Austen) and Twenty Years After (Alexandre Dumas)."_
+  Results: the sentence, the number of new books, the title of the latest one.
+
+### Scene ideas
+
+- **A new book by my favourite author**: when _New book added_ with the author
+  filled in, send a notification "New book: {title}".
+- **Sunday digest**: every Sunday at 10 am, _Read the latest Calibre-Web
+  additions_, then send the sentence as a message.
+- **Family library**: when _New book added_, say "A new book is on the
+  library: {title}" on the living room speaker.
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **"the server does not answer"**: check the address and the port from the
+  Gladys machine. Gladys runs the integration in a container: `localhost` is
+  the container itself, use the IP address of the machine.
+- **"user or password refused"**: check them by logging in to Calibre-Web.
+  A server without anonymous browsing needs a user.
+- **"the "Recently added" list is hidden for this user"**: in Calibre-Web,
+  Admin → the user → show "Recently added" again.
+- **"no Calibre-Web catalog (OPDS) at this address"** or **"the address
+  redirects"**: a server behind a reverse proxy needs its base path
+  (`https://example.org/books`); a login page of the proxy blocks the catalog.
+- **"certificate refused"**: HTTPS with a self-signed certificate is not
+  supported; use the `http://` address of your network.
+- No cover in the widget: the book has none, or Calibre-Web serves a cover
+  larger than 300 KB (Calibre-Web sends the full cover, Calibre-Web Automated
+  a small thumbnail): it is left out.
+- The integration only logs its lifecycle; with `LOG_LEVEL=debug`, it also
+  logs each new book, with its title.
+
+## Limitations
+
+- Calibre-Web has no API for integrations: everything comes from its OPDS
+  catalog, the one e-readers use. The server is read every 1 to 15 minutes
+  (one light request); a new book reaches Gladys within this interval.
+- The OPDS catalog gives no totals: the integration finds them by reading a
+  few pages of each list (about 2 × log2(pages) requests), at the start,
+  hourly, and when the recent books change.
+- Reading progress, downloads and the statistics page of Calibre-Web are not
+  available in OPDS without imitating a browser: they are not read.
+- At most 10 events per reading (a first big import announces 10 books, not
+  hundreds), among the books of the first page of "Recently added" (60 by
+  default).
+- One Calibre-Web server and one user per installation of the integration.
+- Not affiliated with the Calibre-Web or Calibre projects.

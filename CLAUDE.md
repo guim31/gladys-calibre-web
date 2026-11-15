@@ -32,15 +32,20 @@ pushing.
 
 ```
 index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
+src/app.js                        registers every SDK handler on the hub (index.js and the tests)
+src/hub.js                        reads Calibre-Web on its own timer, states, counts, "new book" cursor, actions
+src/devices.js                    the "Calibre-Web" device: features, names in four languages, values
+src/calibre/client.js             OPDS client: Basic auth or anonymous, counts by page search, error kinds
+src/calibre/opds.js               parser of the Atom feeds (books, next page, project link)
+src/calibre/http.js               the one network function (node:http/https), the test seam
 src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+src/widgets.js                    dashboard widget handler and covers (manifest `widgets`)
+src/texts.js                      status, errors, reports and sentences, four languages
+src/store.js                      cursor of the "new book" event under /data
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (en and fr mandatory)
+test/                             node --test, against the SDK's fake Gladys and test/helpers/fakeCalibre.js
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +75,9 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in four languages (English, French, German,
+  Spanish): action messages, widget texts, feature names, manifest texts, and
+  `docs/{en,fr,de,es}.md`, kept in sync (`test/i18n.test.js`).
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -251,3 +257,28 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Calibre-Web (propre à cette intégration)
+
+- **Versions testées** : Calibre-Web **0.6.27** (`lscr.io/linuxserver/calibre-web`, build du 08/11/2026) et
+  Calibre-Web Automated (`crocodilestick/calibre-web-automated`, image du 28/09/2026), en Docker, avec une
+  bibliothèque d'EPUB générés (CWA crée la bibliothèque et importe les livres déposés dans `/cwa-book-ingest` ;
+  l'image linuxserver n'a pas de `calibredb` : lui monter la bibliothèque créée par CWA et régler
+  `config_calibre_dir` dans `/config/app.db`). Identifiants par défaut des deux : `admin` / `admin123`.
+- **Pas d'API REST** : seulement l'OPDS (`/opds/...`, Basic auth, `requires_basic_auth_if_no_ano` : sans en-tête
+  et avec la navigation anonyme, l'utilisateur Guest). `/stats` et `/cover/<id>/<taille>` redirigent vers `/login`
+  (session à formulaire CSRF) : ne pas s'en servir.
+- **Pas de total dans les flux** : seulement `rel="next"` (`?offset=`, taille de page `config_books_per_page`, 60 par
+  défaut). Les comptes se font par recherche doublante puis dichotomique (`CalibreClient.count`). Listes « All » :
+  `/opds/books/letter/00`, `/opds/author/letter/00`, `/opds/series/letter/00` (auteurs et séries ayant au moins
+  un livre visible pour l'utilisateur).
+- **Visibilité** : une liste masquée dans les réglages de l'utilisateur répond **404** (`abort(404)`) ; « Ajouts
+  récents » masqué rend l'intégration aveugle (erreur `hidden`), auteurs ou séries masqués laissent leur compte vide.
+- **Entrées** : l'id Calibre se lit dans `/opds/cover/<id>` ou `/opds/download/<id>/<format>/` ; `<updated>` est la
+  date d'ajout (`timestamp`, UTC avec `+00:00`) ; `<published>` vaut `101-01-01…` sans date de publication. La série
+  n'est que dans le texte du `<content>` de Calibre-Web (`SERIES: …`), absente chez CWA : non lue.
+- **Couvertures** : `/opds/cover/<id>` sert la **couverture complète** chez Calibre-Web (souvent plus de 300 Ko,
+  plafond du cœur pour une image de widget) et une vignette WebP/JPEG chez CWA. Une couverture refusée est retirée
+  des contenus suivants (`hub.badCovers`).
+- **Fork** : `<author><uri>` du flux vaut `https://github.com/janeczku/calibre-web` ou
+  `…/crocodilestick/calibre-web-automated`.

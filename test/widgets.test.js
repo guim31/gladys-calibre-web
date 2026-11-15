@@ -1,77 +1,108 @@
+// -----------------------------------------------------------------------------
+// The widget: valid content for the core in every state (configured or not,
+// server down, every language), covers served from Calibre-Web, the setting
+// that hides the counts, a cover the core would refuse left out.
+// -----------------------------------------------------------------------------
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { validateWidgetContent } from '@gladysassistant/integration-sdk';
-import { createFakeGladys } from '@gladysassistant/integration-sdk/testing';
-import { buildDiscoveredDevices } from '../src/devices/index.js';
-import { simulateLanSession } from '../src/devices/plug.js';
-import { DEMO_STATUS_WIDGET, WIDGETS, refreshWidgets } from '../src/widgets.js';
-import { normalizeConfig } from '../src/config.js';
+import { WIDGET_KEYS } from '../src/hub.js';
+import { COVER, createWorld } from './helpers/world.js';
 
-const gladys = createFakeGladys();
-const config = normalizeConfig();
-const demoStatus = WIDGETS[DEMO_STATUS_WIDGET];
+const KEY = WIDGET_KEYS.RECENTLY_ADDED;
 
-// What the SDK passes to onWidgetGet, plus the config index.js adds.
-const getContent = (cfg = config) =>
-  demoStatus.get(gladys, { settings: {}, language: 'en', units: 'metric', config: cfg });
+async function world(t, options) {
+  const w = await createWorld(options);
+  t.after(() => w.app.stop());
+  return w;
+}
 
-test('the demo_status content is rendered exactly as sent', async () => {
-  // [] = nothing the core would drop, truncate or trim to the content budget.
-  assert.deepEqual(validateWidgetContent(await getContent()), []);
+async function content(w, language = 'en', settings = {}) {
+  const ack = await w.fake.widgetGet(KEY, { settings, language });
+  assert.equal(ack.success, true, ack.error);
+  const { content: value } = ack.data;
+  assert.deepEqual(validateWidgetContent(value), [], `${KEY} (${language})`);
+  return value;
+}
+
+test('the widget is valid in every language and state', async (t) => {
+  const configured = await world(t);
+  const empty = await world(t, { config: {} });
+  const down = await world(t);
+  down.server.online = false;
+  await down.hub.refresh();
+  const none = await world(t);
+  none.server.books = [];
+  await none.hub.refresh();
+  for (const w of [configured, empty, down, none]) {
+    for (const language of ['en', 'fr', 'de', 'es']) {
+      await content(w, language);
+    }
+  }
+  assert.equal(
+    (await content(none, 'fr')).components.at(-1).text,
+    "La bibliothèque n'a encore aucun livre.",
+  );
 });
 
-test('the degraded plug connection content is valid too', async () => {
-  simulateLanSession(false);
-  try {
-    const content = await getContent();
-    assert.deepEqual(validateWidgetContent(content), []);
-    const status = content.components.find((component) => component.type === 'status');
-    assert.ok(
-      status.items.some((item) => item.color === 'warning'),
-      'degraded shows a warning',
+test('recently added: the counts and a cover grid, newest first', async (t) => {
+  const w = await world(t);
+  w.server.addBook(w.clock.now(), { title: 'No Cover Here', authors: [] });
+  await w.hub.refresh();
+  const { components } = await content(w, 'fr');
+  assert.deepEqual(
+    components.filter((c) => c.type === 'value').map((c) => [c.label, c.value]),
+    [
+      ['Livres', 4],
+      ['Auteurs', 3],
+    ],
+  );
+  const grid = components.find((c) => c.type === 'card-list');
+  assert.deepEqual(
+    grid.items.map((item) => [item.title, item.subtitle ?? null, item.image ?? null]),
+    [
+      ['No Cover Here', null, null],
+      ['Twenty Thousand Leagues under the Seas', 'Jules Verne', 'book-3'],
+      ['The Three Musketeers', 'Alexandre Dumas', 'book-2'],
+      ['Pride and Prejudice', 'Jane Austen', 'book-1'],
+    ],
+  );
+});
+
+test('the setting hides the counts', async (t) => {
+  const w = await world(t);
+  for (const off of [false, 'false']) {
+    const { components } = await content(w, 'en', { show_counts: off });
+    assert.deepEqual(
+      components.map((c) => c.type),
+      ['card-list'],
     );
-  } finally {
-    simulateLanSession(true);
   }
 });
 
-test('the live tiles reference features the integration publishes', async () => {
-  const featureIds = new Set(
-    buildDiscoveredDevices(gladys, config).flatMap((device) =>
-      device.features.map((feature) => feature.external_id),
-    ),
-  );
-  const liveTiles = (await getContent()).components.filter((c) => c.device_feature);
-  assert.ok(liveTiles.length > 0, 'the template demonstrates a device-bound tile');
-  for (const tile of liveTiles) {
-    assert.ok(featureIds.has(tile.device_feature), `unknown feature ${tile.device_feature}`);
+test('covers come from Calibre-Web, only for the keys the widget declares', async (t) => {
+  const w = await world(t);
+  const ack = await w.fake.widgetGetImage('book-2');
+  assert.equal(ack.success, true, ack.error);
+  assert.equal(ack.data.image, COVER.toString('base64'));
+  for (const key of ['book-x', '../etc/passwd', 'series-2']) {
+    assert.equal((await w.fake.widgetGetImage(key)).success, false, key);
   }
 });
 
-test('every button action of the content is handled and answers a short toast', async () => {
-  const buttons = (await getContent()).components.filter((c) => c.type === 'button' && c.action);
-  assert.ok(buttons.length > 0, 'the template demonstrates a widget action');
-  for (const { action } of buttons) {
-    const message = await demoStatus.action(gladys, {
-      actionKey: action.key,
-      params: action.params ?? {},
-      settings: {},
-      config,
-    });
-    assert.ok(message.en, 'the toast carries at least the mandatory `en` text');
-    assert.ok(message.en.length <= 200, 'toasts are capped at 200 characters');
-  }
-});
-
-test('an unknown widget action fails, so the user sees the error', async () => {
-  await assert.rejects(
-    demoStatus.action(gladys, { actionKey: 'unknown', params: {}, settings: {}, config }),
-    /Unknown widget action/,
-  );
-});
-
-test('refreshWidgets nudges every widget', () => {
-  const fresh = createFakeGladys();
-  refreshWidgets(fresh);
-  assert.deepEqual(fresh.fake.widgetRefreshes, Object.keys(WIDGETS));
+test('a cover too large for the core is left out of the next contents', async (t) => {
+  const w = await world(t);
+  w.server.covers.set(1, Buffer.concat([COVER, Buffer.alloc(400 * 1024)]));
+  assert.equal((await w.fake.widgetGetImage('book-1')).success, false);
+  assert.ok(w.fake.widgetRefreshes.includes(KEY));
+  const grid = (await content(w)).components.find((c) => c.type === 'card-list');
+  const pride = grid.items.find((item) => item.title === 'Pride and Prejudice');
+  assert.equal(pride.image, undefined);
+  // A server down does not hide a cover.
+  w.server.online = false;
+  assert.equal((await w.fake.widgetGetImage('book-2')).success, false);
+  w.server.online = true;
+  const again = (await content(w)).components.find((c) => c.type === 'card-list');
+  assert.equal(again.items.find((item) => item.title === 'The Three Musketeers').image, 'book-2');
 });
