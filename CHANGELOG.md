@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-15
+
 ### Added
 
 - A Calibre-Web device (Calibre-Web or Calibre-Web Automated, read through its
@@ -23,4 +25,5 @@ the notes of the version's GitHub Release.
 - A user and password of Calibre-Web, or anonymous browsing; texts and
   documentation in English, French, German and Spanish.
 
-[Unreleased]: https://github.com/guim31/gladys-calibre-web/commits/main
+[Unreleased]: https://github.com/guim31/gladys-calibre-web/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/guim31/gladys-calibre-web/releases/tag/v1.0.0
