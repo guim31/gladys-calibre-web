@@ -199,6 +199,13 @@ test('errors: wrong password, hidden "Recently added", server down, not Calibre-
     other.fake.connectionStatus.message.en,
     'Calibre-Web: no Calibre-Web catalog (OPDS) at this address',
   );
+
+  // A wrong base path: /opds itself answers 404.
+  const path = await world(t, { config: { ...CONFIG, server_url: `${SERVER_URL}/wrong` } });
+  assert.equal(
+    path.fake.connectionStatus.message.en,
+    'Calibre-Web: no Calibre-Web catalog (OPDS) at this address',
+  );
 });
 
 test('never the password in a status, a param or an error', async (t) => {

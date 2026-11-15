@@ -170,8 +170,11 @@ export class FakeCalibre {
     const url = new URL(path, 'http://calibre');
     const route = url.pathname;
     const offset = Number(url.searchParams.get('offset') ?? 0);
-    if (!route.startsWith('/opds')) {
+    if (route === '/') {
       return { status: 302, headers: { location: '/login' }, body: '' };
+    }
+    if (!route.startsWith('/opds')) {
+      return { status: 404, headers: {}, body: '<html>Not Found</html>' };
     }
     if (!this.authorized(headers)) {
       return {

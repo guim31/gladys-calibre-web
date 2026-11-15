@@ -125,7 +125,16 @@ export class CalibreClient {
    * the feed).
    */
   async catalog() {
-    const feed = await this.feed('/opds');
+    let feed;
+    try {
+      feed = await this.feed('/opds');
+    } catch (err) {
+      // No catalog at all at this address (a wrong base path), not a hidden list.
+      if (err.kind === ERROR_KINDS.HIDDEN) {
+        throw new CalibreError(ERROR_KINDS.NOT_CALIBRE, `/opds: HTTP ${err.status}`);
+      }
+      throw err;
+    }
     if (!/\/opds\/(new|books)\b/.test(feed.entries.join(''))) {
       throw new CalibreError(ERROR_KINDS.NOT_CALIBRE, '/opds: not a Calibre-Web catalog');
     }
