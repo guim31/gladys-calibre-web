@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:dcterms="http://purl.org/dc/terms/">
+  <icon>/static/favicon.ico</icon>
+  <id>urn:uuid:2853dacf-ed79-42f5-8e8a-a7bb3d1ae6a2</id>
+  <updated>2026-11-15T01:34:29+00:00</updated>
+  <link rel="self"
+        href="/opds/new?"
+        type="application/atom+xml;profile=opds-catalog;type=feed;kind=navigation"/>
+  <link rel="start"
+        href="/opds"
+        type="application/atom+xml;profile=opds-catalog;type=feed;kind=navigation"/>
+  <link rel="up"
+        href="/opds"
+        type="application/atom+xml;profile=opds-catalog;type=feed;kind=navigation"/>
+
+
+
+    <link rel="search"
+      href="/opds/osd"
+      type="application/opensearchdescription+xml"/>
+  <link type="application/atom+xml" rel="search" title="Search" href="/opds/search/{searchTerms}" />
+  <title>Calibre-Web Automated</title>
+  <author>
+    <name>Calibre-Web Automated</name>
+    <uri>https://github.com/crocodilestick/calibre-web-automated</uri>
+  </author>
+
+  
+  
+  <entry>
+    <title>Twenty Thousand Leagues under the Seas</title>
+    <id>urn:uuid:466bb018-df0a-4b27-904d-26d98227a9f2</id>
+    <updated>2026-11-15T01:26:53+00:00</updated>
+    
+      <author>
+        <name>Jules Verne</name>
+      </author>
+    
+    
+    <published>101-01-01T00:00:00+00:00</published>
+    
+      <dcterms:language>eng</dcterms:language>
+    
+    
+    
+    
+    
+    <link type="image/jpeg" href="/opds/cover/4" rel="http://opds-spec.org/image"/>
+    <link type="image/jpeg" href="/opds/cover/4" rel="http://opds-spec.org/image/thumbnail"/>
+    
+    
+    <link rel="http://opds-spec.org/acquisition" href="/opds/download/4/epub/"
+          length="1492" mtime="2026-11-15T01:26:53+00:00" type="application/epub+zip"/>
+    
+  </entry>
+  
+  <entry>
+    <title>The Three Musketeers</title>
+    <id>urn:uuid:e36ecf9e-2b09-4feb-80a9-0cd1255fb821</id>
+    <updated>2026-11-15T01:26:48+00:00</updated>
+    
+      <author>
+        <name>Alexandre Dumas</name>
+      </author>
+    
+    
+    <published>101-01-01T00:00:00+00:00</published>
+    
+      <dcterms:language>eng</dcterms:language>
+    
+    
+    
+    
+    
+    <link type="image/jpeg" href="/opds/cover/3" rel="http://opds-spec.org/image"/>
+    <link type="image/jpeg" href="/opds/cover/3" rel="http://opds-spec.org/image/thumbnail"/>
+    
+    
+    <link rel="http://opds-spec.org/acquisition" href="/opds/download/3/epub/"
+          length="3300" mtime="2026-11-15T01:26:48+00:00" type="application/epub+zip"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Pride and Prejudice</title>
+    <id>urn:uuid:39ee261c-20ef-4e64-96f1-8beda662f2f4</id>
+    <updated>2026-11-15T01:26:45+00:00</updated>
+    
+      <author>
+        <name>Jane Austen</name>
+      </author>
+    
+    
+    <published>101-01-01T00:00:00+00:00</published>
+    
+      <dcterms:language>eng</dcterms:language>
+    
+    
+    
+    
+    
+    <link type="image/jpeg" href="/opds/cover/2" rel="http://opds-spec.org/image"/>
+    <link type="image/jpeg" href="/opds/cover/2" rel="http://opds-spec.org/image/thumbnail"/>
+    
+    
+    <link rel="http://opds-spec.org/acquisition" href="/opds/download/2/epub/"
+          length="3190" mtime="2026-11-15T01:26:45+00:00" type="application/epub+zip"/>
+    
+  </entry>
+  
+  
+  
+  
+</feed>

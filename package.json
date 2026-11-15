@@ -1,8 +1,8 @@
 {
-  "name": "gladys-integration-template-js",
+  "name": "gladys-calibre-web",
   "version": "1.0.0",
   "private": true,
-  "description": "Official starter template to build an external integration for Gladys Assistant with the JavaScript SDK.",
+  "description": "Calibre-Web integration for Gladys Assistant: books, authors, series, last book added, a scene event for every new book.",
   "type": "module",
   "main": "index.js",
   "scripts": {

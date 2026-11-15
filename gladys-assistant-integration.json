@@ -1,177 +1,357 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Calibre-Web",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Your Calibre-Web library in Gladys: books, authors, series, a scene for every new book.",
+    "fr": "Votre bibliothèque Calibre-Web dans Gladys : livres, auteurs, séries, une scène par nouveau livre.",
+    "de": "Deine Calibre-Web-Bibliothek in Gladys: Bücher, Autoren, Serien, eine Szene für jedes neue Buch.",
+    "es": "Su biblioteca Calibre-Web en Gladys: libros, autores, series, una escena por cada libro nuevo."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "docker_image": "ghcr.io/guim31/gladys-calibre-web:1.0.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-calibre-web/main/cover.png",
+  "categories": ["multimedia"],
+  "transports": ["local"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Connect to your Calibre-Web server",
+        "fr": "Connexion à votre serveur Calibre-Web",
+        "de": "Verbindung zu deinem Calibre-Web-Server",
+        "es": "Conexión a su servidor Calibre-Web"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Enter the address of the server (for example http://192.168.1.20:8083) and a Calibre-Web user and password. The integration reads the OPDS catalog: Calibre-Web Automated works too. Leave the user empty if anonymous browsing is on.",
+        "fr": "Indiquez l'adresse du serveur (par exemple http://192.168.1.20:8083), un utilisateur Calibre-Web et son mot de passe. L'intégration lit le catalogue OPDS : Calibre-Web Automated fonctionne aussi. Laissez l'utilisateur vide si la navigation anonyme est activée.",
+        "de": "Gib die Adresse des Servers (zum Beispiel http://192.168.1.20:8083) sowie einen Calibre-Web-Benutzer und sein Passwort ein. Die Integration liest den OPDS-Katalog: Calibre-Web Automated funktioniert auch. Lass den Benutzer leer, wenn anonymes Stöbern aktiv ist.",
+        "es": "Introduzca la dirección del servidor (por ejemplo http://192.168.1.20:8083), un usuario de Calibre-Web y su contraseña. La integración lee el catálogo OPDS: Calibre-Web Automated también funciona. Deje el usuario vacío si la navegación anónima está activada."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://github.com/janeczku/calibre-web/wiki",
+          "label": {
+            "en": "Calibre-Web documentation",
+            "fr": "Documentation de Calibre-Web",
+            "de": "Calibre-Web-Dokumentation",
+            "es": "Documentación de Calibre-Web"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+      "key": "server_url",
+      "type": "string",
+      "label": {
+        "en": "Server URL",
+        "fr": "URL du serveur",
+        "de": "Server-URL",
+        "es": "URL del servidor"
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
+      "description": {
+        "en": "Address of the server, port included (8083 by default). An https address behind a reverse proxy works too, with its base path.",
+        "fr": "Adresse du serveur, port inclus (8083 par défaut). Une adresse https derrière un reverse proxy fonctionne aussi, avec son chemin de base.",
+        "de": "Adresse des Servers mit Port (standardmäßig 8083). Eine https-Adresse hinter einem Reverse Proxy funktioniert ebenfalls, mit ihrem Basispfad.",
+        "es": "Dirección del servidor, puerto incluido (8083 por defecto). También funciona una dirección https detrás de un proxy inverso, con su ruta base."
+      },
+      "placeholder": {
+        "en": "http://192.168.1.20:8083",
+        "fr": "http://192.168.1.20:8083",
+        "de": "http://192.168.1.20:8083",
+        "es": "http://192.168.1.20:8083"
+      },
+      "required": true
     },
     {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
+      "key": "username",
+      "type": "string",
+      "label": {
+        "en": "User",
+        "fr": "Utilisateur",
+        "de": "Benutzer",
+        "es": "Usuario"
       },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
+      "description": {
+        "en": "A Calibre-Web user: the integration sees the books this user sees. A reader account is enough.",
+        "fr": "Un utilisateur de Calibre-Web : l'intégration voit les livres que voit cet utilisateur. Un compte de lecteur suffit.",
+        "de": "Ein Calibre-Web-Benutzer: Die Integration sieht die Bücher, die dieser Benutzer sieht. Ein Leserkonto genügt.",
+        "es": "Un usuario de Calibre-Web: la integración ve los libros que ve este usuario. Basta con una cuenta de lector."
+      },
+      "required": false
     },
     {
-      "key": "unit",
+      "key": "password",
+      "type": "secret",
+      "label": {
+        "en": "Password",
+        "fr": "Mot de passe",
+        "de": "Passwort",
+        "es": "Contraseña"
+      },
+      "required": false
+    },
+    {
+      "key": "poll_interval",
       "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "label": {
+        "en": "Refresh",
+        "fr": "Rafraîchissement",
+        "de": "Aktualisierung",
+        "es": "Actualización"
+      },
+      "description": {
+        "en": "How often the server is read (one light request; the counts once an hour or after a new book).",
+        "fr": "Fréquence de lecture du serveur (une requête légère ; les comptes une fois par heure ou après un nouveau livre).",
+        "de": "Wie oft der Server gelesen wird (eine leichte Anfrage; die Zählungen einmal pro Stunde oder nach einem neuen Buch).",
+        "es": "Frecuencia de lectura del servidor (una petición ligera; los recuentos una vez por hora o tras un libro nuevo)."
+      },
       "required": false,
-      "default": "celsius",
+      "default": "300",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "60",
+          "label": {
+            "en": "1 minute",
+            "fr": "1 minute",
+            "de": "1 Minute",
+            "es": "1 minuto"
+          }
+        },
+        {
+          "value": "300",
+          "label": {
+            "en": "5 minutes",
+            "fr": "5 minutes",
+            "de": "5 Minuten",
+            "es": "5 minutos"
+          }
+        },
+        {
+          "value": "900",
+          "label": {
+            "en": "15 minutes",
+            "fr": "15 minutes",
+            "de": "15 Minuten",
+            "es": "15 minutos"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "language",
+      "type": "select",
+      "display": "radio",
+      "label": {
+        "en": "Language of the names",
+        "fr": "Langue des noms",
+        "de": "Sprache der Namen",
+        "es": "Idioma de los nombres"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "Language of the feature names and of the sentence of the scene action. Names are set when a device is created: to rename them after a change, delete and re-add the device.",
+        "fr": "Langue des noms de fonctionnalités et de la phrase de l'action de scène. Les noms sont fixés à la création d'un appareil : pour les renommer après un changement, supprimez puis rajoutez l'appareil.",
+        "de": "Sprache der Funktionsnamen und des Satzes der Szenenaktion. Die Namen werden beim Erstellen eines Geräts festgelegt: Um sie nach einer Änderung umzubenennen, lösche das Gerät und füge es erneut hinzu.",
+        "es": "Idioma de los nombres de las funcionalidades y de la frase de la acción de escena. Los nombres se fijan al crear un dispositivo: para cambiarlos, elimine el dispositivo y vuelva a añadirlo."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "fr",
+      "options": [
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "Anglais",
+            "de": "Englisch",
+            "es": "Inglés"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "French",
+            "fr": "Français",
+            "de": "Französisch",
+            "es": "Francés"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "German",
+            "fr": "Allemand",
+            "de": "Deutsch",
+            "es": "Alemán"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Spanish",
+            "fr": "Espagnol",
+            "de": "Spanisch",
+            "es": "Español"
+          }
+        }
+      ]
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
+      "key": "test_connection",
+      "label": {
+        "en": "Test the connection",
+        "fr": "Tester la connexion",
+        "de": "Verbindung testen",
+        "es": "Probar la conexión"
+      },
+      "description": {
+        "en": "Reads the server now and reports what it finds.",
+        "fr": "Lit le serveur maintenant et indique ce qu'il trouve.",
+        "de": "Liest den Server sofort und meldet, was er findet.",
+        "es": "Lee el servidor ahora e indica lo que encuentra."
+      },
       "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "book_added",
+      "label": {
+        "en": "New book added",
+        "fr": "Nouveau livre ajouté",
+        "de": "Neues Buch hinzugefügt",
+        "es": "Nuevo libro añadido"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "A new book appears in the Calibre library (as seen by the configured user).",
+        "fr": "Un nouveau livre apparaît dans la bibliothèque Calibre (vue par l'utilisateur configuré).",
+        "de": "Ein neues Buch erscheint in der Calibre-Bibliothek (aus Sicht des eingestellten Benutzers).",
+        "es": "Un nuevo libro aparece en la biblioteca de Calibre (vista por el usuario configurado)."
       },
       "fields": [
         {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
-        },
-        {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
-          "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
-          ]
+          "key": "author",
+          "type": "string",
+          "label": {
+            "en": "Author (empty: any)",
+            "fr": "Auteur (vide : n'importe lequel)",
+            "de": "Autor (leer: beliebig)",
+            "es": "Autor (vacío: cualquiera)"
+          },
+          "description": {
+            "en": "Exactly as shown in Calibre-Web (several authors: separated by a comma and a space).",
+            "fr": "Exactement comme dans Calibre-Web (plusieurs auteurs : séparés par une virgule et une espace).",
+            "de": "Genau wie in Calibre-Web angezeigt (mehrere Autoren: durch Komma und Leerzeichen getrennt).",
+            "es": "Exactamente como aparece en Calibre-Web (varios autores: separados por una coma y un espacio)."
+          }
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "title",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Book title",
+            "fr": "Titre du livre",
+            "de": "Buchtitel",
+            "es": "Título del libro"
+          }
+        },
+        {
+          "key": "author",
+          "type": "string",
+          "label": {
+            "en": "Author",
+            "fr": "Auteur",
+            "de": "Autor",
+            "es": "Autor"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "read_latest_additions",
+      "label": {
+        "en": "Read the latest Calibre-Web additions",
+        "fr": "Lire les derniers ajouts de Calibre-Web",
+        "de": "Neueste Calibre-Web-Zugänge vorlesen",
+        "es": "Leer las últimas novedades de Calibre-Web"
       },
-      "timeout_seconds": 15,
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ],
+      "description": {
+        "en": "A sentence for a message: the books added in the last 7 days.",
+        "fr": "Une phrase pour un message : les livres ajoutés ces 7 derniers jours.",
+        "de": "Ein Satz für eine Nachricht: die in den letzten 7 Tagen hinzugefügten Bücher.",
+        "es": "Una frase para un mensaje: los libros añadidos en los últimos 7 días."
+      },
+      "timeout_seconds": 30,
       "outputs": [
         {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "key": "sentence",
+          "type": "string",
+          "label": {
+            "en": "Sentence",
+            "fr": "Phrase",
+            "de": "Satz",
+            "es": "Frase"
+          }
+        },
+        {
+          "key": "count",
+          "type": "number",
+          "label": {
+            "en": "New books",
+            "fr": "Nouveaux livres",
+            "de": "Neue Bücher",
+            "es": "Libros nuevos"
+          }
+        },
+        {
+          "key": "title",
+          "type": "string",
+          "label": {
+            "en": "Title of the latest one",
+            "fr": "Titre du dernier",
+            "de": "Titel des neuesten",
+            "es": "Título del último"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "recently_added",
+      "label": {
+        "en": "Calibre-Web: recently added",
+        "fr": "Calibre-Web : derniers ajouts",
+        "de": "Calibre-Web: neu hinzugefügt",
+        "es": "Calibre-Web: novedades"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "The last books added to Calibre-Web, with their covers and authors.",
+        "fr": "Les derniers livres ajoutés à Calibre-Web, avec leurs couvertures et auteurs.",
+        "de": "Die zuletzt zu Calibre-Web hinzugefügten Bücher mit Covern und Autoren.",
+        "es": "Los últimos libros añadidos a Calibre-Web, con sus portadas y autores."
+      },
+      "icon": "book",
+      "settings": [
+        {
+          "key": "show_counts",
+          "type": "boolean",
+          "label": {
+            "en": "Show the book and author counts",
+            "fr": "Afficher les nombres de livres et d'auteurs",
+            "de": "Bücher- und Autorenzahl anzeigen",
+            "es": "Mostrar el número de libros y autores"
+          },
+          "default": true
+        }
+      ]
     }
   ]
 }

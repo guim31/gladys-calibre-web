@@ -30,6 +30,15 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+The integration stores in `/data` only the id of the last Calibre book it has
+seen (the cursor of the "New book added" event). The Calibre-Web password is
+kept by Gladys in the configuration of the integration; it travels only in the
+HTTP Basic Authorization header of the requests to the configured server, and
+is never logged nor shown in a status or an error. The integration only reads
+the OPDS catalog of Calibre-Web (and the covers), over the address the user
+configures, on the local network or behind a reverse proxy: plain HTTP sends
+the password in clear on that network. No other host is contacted.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+and Calibre-Web, Calibre-Web Automated and Calibre themselves.
