@@ -47,6 +47,8 @@ export const TRIGGERS = Object.freeze({
 export const HUB_TIMINGS = {
   // The counts cost a few requests: read them hourly, or when books change.
   countsMs: 60 * 60_000,
+  // After a list in error, count again this soon.
+  countRetryMs: 10 * 60_000,
   // At most this many scene events per reading (a first big import).
   maxEventsPerRead: 10,
   // Republish an unchanged value this often (Gladys flags a value older than 48 h).
@@ -97,6 +99,8 @@ export class CalibreHub {
     this.countsAt = 0;
     /** Time of the last successful reading of "Recently added". */
     this.readAt = 0;
+    /** A list failed at the last count (counted again sooner). */
+    this.countFailed = false;
     /** Cover keys the widget cannot show (too large, unknown format). */
     this.badCovers = new Set();
     /** Last value published per feature external id: { value, at }. */
@@ -266,7 +270,7 @@ export class CalibreHub {
         logger.info(`${this.snapshot.flavor}: connection restored`);
       } else if (this.snapshot.reachable === null) {
         const who = this.config.username ? 'as a user' : 'anonymously';
-        logger.info(`${this.snapshot.flavor}: connected ${who}, ${this.snapshot.books} book(s)`);
+        logger.info(`${this.snapshot.flavor}: connected ${who}`);
       }
       if (this.snapshot.reachable !== true) {
         changed.add(WIDGET_KEYS.RECENTLY_ADDED);
@@ -347,12 +351,21 @@ export class CalibreHub {
     // The events first: a failing count must not hold them back.
     await this.announceBooks(recent);
     if (booksChanged || now - this.countsAt >= this.timings.countsMs) {
-      // A book added, edited or deleted, or an hour gone: count again. Once
-      // per change or per hour even when a count fails (they cost requests).
+      // A book added, edited or deleted, or an hour gone: count again.
       this.countsAt = now;
-      this.snapshot.books = await this.optional(client, 'books', LISTS.BOOKS);
-      this.snapshot.authors = await this.optional(client, 'authors', LISTS.AUTHORS);
-      this.snapshot.series = await this.optional(client, 'series', LISTS.SERIES);
+      this.countFailed = false;
+      try {
+        this.snapshot.books = await this.optional(client, 'books', LISTS.BOOKS);
+        this.snapshot.authors = await this.optional(client, 'authors', LISTS.AUTHORS);
+        this.snapshot.series = await this.optional(client, 'series', LISTS.SERIES);
+      } catch (err) {
+        this.countsAt = 0; // the server failed mid-way: count at the next reading
+        throw err;
+      }
+      if (this.countFailed) {
+        // A list in error: try again sooner than the hour.
+        this.countsAt = now - this.timings.countsMs + this.timings.countRetryMs;
+      }
     }
   }
 
@@ -368,11 +381,17 @@ export class CalibreHub {
       this.resolved(`optional-${name}`);
       return count;
     } catch (err) {
-      if (![ERROR_KINDS.HIDDEN, ERROR_KINDS.HTTP, ERROR_KINDS.NOT_CALIBRE].includes(err.kind)) {
+      if (err.kind === ERROR_KINDS.HIDDEN) {
+        this.problem(`optional-${name}`, `Calibre-Web: ${err.message}, ${name} count left empty`);
+        return null;
+      }
+      if (![ERROR_KINDS.HTTP, ERROR_KINDS.NOT_CALIBRE].includes(err.kind)) {
         throw err;
       }
-      this.problem(`optional-${name}`, `Calibre-Web: ${err.message}, ${name} count left empty`);
-      return null;
+      // A passing error: the last known figure stays.
+      this.countFailed = true;
+      this.problem(`optional-${name}`, `Calibre-Web: ${err.message}, ${name} count kept`);
+      return this.snapshot[name];
     }
   }
 
@@ -621,7 +640,7 @@ export class CalibreHub {
     return everyLanguage(REPORT_TEXT, (text) =>
       [
         text.ok(flavor, this.config.username),
-        text.books(books ?? 0),
+        ...(books === null ? [] : [text.books(books)]),
         ...(authors === null ? [] : [text.authors(authors)]),
         ...(series === null ? [] : [text.series(series)]),
       ].join(', '),

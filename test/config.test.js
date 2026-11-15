@@ -13,6 +13,10 @@ test('the address typed by the user becomes a base URL', () => {
   );
   assert.equal(parseServerUrl('https://example.org/calibre/login'), 'https://example.org/calibre');
   assert.equal(parseServerUrl('http://192.0.2.10:8083/author/3'), 'http://192.0.2.10:8083');
+  assert.equal(
+    parseServerUrl('http://192.0.2.10:8083/category/stored/3'),
+    'http://192.0.2.10:8083',
+  );
   assert.equal(parseServerUrl('https://example.org/me/books'), 'https://example.org/me/books');
   assert.equal(
     parseServerUrl('https://example.org/shelf/calibre/'),
