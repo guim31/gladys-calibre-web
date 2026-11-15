@@ -125,7 +125,6 @@ export async function getImage(hub, imageKey) {
     throw new Error(`Unknown image ${imageKey}`);
   }
   const client = hub.requireClient();
-  const { body } = await client.cover(match[1]);
   // Calibre-Web serves the full cover (Calibre-Web Automated a thumbnail): one
   // above the limit of the core, or in a format it refuses, is left out of
   // the next contents instead of showing as a broken image.
@@ -133,6 +132,12 @@ export async function getImage(hub, imageKey) {
     hub.rejectCover(imageKey);
     return new Error(`Cover ${imageKey} not shown: ${reason}`);
   };
+  let body;
+  try {
+    ({ body } = await client.cover(match[1]));
+  } catch (err) {
+    throw err.tooLarge ? refuse('over 4 MB') : err;
+  }
   if (!Buffer.isBuffer(body) || body.length === 0 || body.length > MAX_IMAGE_BYTES) {
     throw refuse(`${body?.length ?? 0} bytes`);
   }

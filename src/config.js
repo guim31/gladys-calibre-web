@@ -23,7 +23,7 @@ export const DEFAULT_CONFIG = {
 
 // Pages of the web client a user may copy from the browser.
 const CLIENT_PAGES =
-  /\/(opds|login|admin|me|stats|advsearch|search|shelf|book\/\d+|(author|series|category|publisher|language|ratings|formats|hot|rated|discover|unreadbooks|readbooks|table)(\/[^/]*)?)(\/.*)?$/i;
+  /\/(opds(\/.*)?|login|me|stats|advsearch|admin(\/.*)?|search(\/.*)?|(book|shelf)\/\d+|(author|series|category|publisher|language|ratings|formats|hot|rated|discover|unreadbooks|readbooks|table)(\/[^/]*)?)$/i;
 
 /**
  * Parse the address typed by the user into a base URL: a bare host or IP

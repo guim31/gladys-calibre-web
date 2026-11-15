@@ -51,8 +51,6 @@ export const HUB_TIMINGS = {
   maxEventsPerRead: 10,
   // Republish an unchanged value this often (Gladys flags a value older than 48 h).
   heartbeatMs: 12 * 60 * 60_000,
-  // Books kept for the widget.
-  recentCount: 12,
   // "Read the latest additions": the window, in days.
   recentDays: 7,
 };
@@ -97,6 +95,8 @@ export class CalibreHub {
     /** The first page of "Recently added", newest first. */
     this.recent = [];
     this.countsAt = 0;
+    /** Time of the last successful reading of "Recently added". */
+    this.readAt = 0;
     /** Cover keys the widget cannot show (too large, unknown format). */
     this.badCovers = new Set();
     /** Last value published per feature external id: { value, at }. */
@@ -186,6 +186,7 @@ export class CalibreHub {
     this.error = null;
     this.recent = [];
     this.countsAt = 0;
+    this.readAt = 0;
     this.badCovers.clear();
     this.transport = null;
   }
@@ -337,29 +338,29 @@ export class CalibreHub {
     }
     const recent = await client.newest();
     const booksChanged = !sameBooks(recent, this.recent);
-    if (
-      booksChanged ||
-      this.snapshot.books === null ||
-      now - this.countsAt >= this.timings.countsMs
-    ) {
-      // A book added, edited or deleted, or an hour gone: count again.
-      this.snapshot.books = await client.count(LISTS.BOOKS);
-      this.snapshot.authors = await this.optional(client, 'authors', LISTS.AUTHORS);
-      this.snapshot.series = await this.optional(client, 'series', LISTS.SERIES);
-      this.countsAt = now;
-    }
     if (booksChanged) {
       changed.add(WIDGET_KEYS.RECENTLY_ADDED);
     }
     this.recent = recent;
     this.snapshot.lastBook = recent[0] ?? null;
+    this.readAt = now;
+    // The events first: a failing count must not hold them back.
     await this.announceBooks(recent);
+    if (booksChanged || now - this.countsAt >= this.timings.countsMs) {
+      // A book added, edited or deleted, or an hour gone: count again. Once
+      // per change or per hour even when a count fails (they cost requests).
+      this.countsAt = now;
+      this.snapshot.books = await this.optional(client, 'books', LISTS.BOOKS);
+      this.snapshot.authors = await this.optional(client, 'authors', LISTS.AUTHORS);
+      this.snapshot.series = await this.optional(client, 'series', LISTS.SERIES);
+    }
   }
 
   /**
-   * A count the device can do without: the authors or series list hidden for
-   * this user (visibility settings of Calibre-Web) leaves the figure empty
-   * instead of the server offline.
+   * A count the device can do without: a list hidden for this user (404,
+   * visibility settings of Calibre-Web), or a page in error, leaves the figure
+   * empty instead of the server offline. A server that stops answering, or
+   * refuses the user, is the error of the whole reading.
    */
   async optional(client, name, list) {
     try {
@@ -367,7 +368,7 @@ export class CalibreHub {
       this.resolved(`optional-${name}`);
       return count;
     } catch (err) {
-      if (err.kind !== ERROR_KINDS.HIDDEN) {
+      if (![ERROR_KINDS.HIDDEN, ERROR_KINDS.HTTP, ERROR_KINDS.NOT_CALIBRE].includes(err.kind)) {
         throw err;
       }
       this.problem(`optional-${name}`, `Calibre-Web: ${err.message}, ${name} count left empty`);
@@ -583,7 +584,11 @@ export class CalibreHub {
    */
   async latestAdditions() {
     this.requireClient();
-    await this.refresh();
+    // A reading of the last interval is fresh enough for a 7-day summary, and
+    // keeps the action within its timeout on a large library.
+    if (this.error || this.now() - this.readAt > this.config.pollIntervalMs + 60_000) {
+      await this.refresh();
+    }
     if (this.error) {
       throw this.actionError(this.error);
     }

@@ -79,7 +79,8 @@ de partida.
   notificación o un altavoz, por ejemplo _«2 libro(s) nuevo(s) en Calibre-Web
   en los últimos 7 días: Pride and Prejudice (Jane Austen) y Twenty Years After
   (Alexandre Dumas).»_ Resultados: la frase, el número de libros nuevos, el
-  título del último.
+  título del último (entre la primera página de «Añadidos recientemente», 60
+  libros por defecto).
 
 ### Ideas de escenas
 

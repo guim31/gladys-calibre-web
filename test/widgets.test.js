@@ -106,3 +106,16 @@ test('a cover too large for the core is left out of the next contents', async (t
   const again = (await content(w)).components.find((c) => c.type === 'card-list');
   assert.equal(again.items.find((item) => item.title === 'The Three Musketeers').image, 'book-2');
 });
+
+test('a cover over the download limit is left out too', async (t) => {
+  const w = await world(t);
+  const original = w.hub.client.request;
+  w.hub.client.request = async (url, options) => {
+    if (url.endsWith('/opds/cover/2')) {
+      throw Object.assign(new Error('Response too large'), { code: 'ETOOLARGE' });
+    }
+    return original(url, options);
+  };
+  assert.equal((await w.fake.widgetGetImage('book-2')).success, false);
+  assert.ok(w.hub.badCovers.has('book-2'));
+});

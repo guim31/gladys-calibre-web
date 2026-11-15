@@ -81,7 +81,8 @@ Ausgangspunkt.
   oder einen Lautsprecher, zum Beispiel _„2 neue(s) Buch/Bücher auf Calibre-Web
   in den letzten 7 Tagen: Pride and Prejudice (Jane Austen) und Twenty Years
   After (Alexandre Dumas).“_ Ergebnisse: der Satz, die Zahl der neuen Bücher,
-  der Titel des neuesten.
+  der Titel des neuesten (unter der ersten Seite von „Kürzlich hinzugefügt“,
+  standardmäßig 60 Bücher).
 
 ### Szenen-Ideen
 

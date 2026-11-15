@@ -81,7 +81,8 @@ point de départ.
   notification ou une enceinte, par exemple _« 2 nouveau(x) livre(s) sur
   Calibre-Web ces 7 derniers jours : Pride and Prejudice (Jane Austen) et Twenty
   Years After (Alexandre Dumas). »_ Résultats : la phrase, le nombre de
-  nouveaux livres, le titre du dernier.
+  nouveaux livres, le titre du dernier (parmi la première page des « Ajouts
+  récents », 60 livres par défaut).
 
 ### Idées de scènes
 

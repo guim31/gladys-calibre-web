@@ -74,7 +74,8 @@ the starting point.
 - **Read the latest Calibre-Web additions**: a sentence for a notification or a
   speaker, for example _"2 new book(s) on Calibre-Web in the last 7 days: Pride
   and Prejudice (Jane Austen) and Twenty Years After (Alexandre Dumas)."_
-  Results: the sentence, the number of new books, the title of the latest one.
+  Results: the sentence, the number of new books, the title of the latest one
+  (among the first page of "Recently added", 60 books by default).
 
 ### Scene ideas
 

@@ -282,3 +282,32 @@ test('test the connection: the server, the user and the counts', async (t) => {
   const again = await cwa.fake.action('test_connection', {});
   assert.match((again.data?.message ?? again.data).fr, /^Calibre-Web Automated : connecté/);
 });
+
+test('a count in error leaves its figure empty, events still fire', async (t) => {
+  const w = await world(t);
+  w.server.failing.add('/opds/author/letter/00');
+  w.clock.advance(60_000);
+  w.server.addBook(w.clock.now(), { title: 'Despite Errors' });
+  await w.hub.refresh();
+  assert.equal(state(w, 'online'), 1);
+  assert.equal(state(w, 'books'), 4);
+  assert.deepEqual(
+    events(w).map((event) => event.data.title),
+    ['Despite Errors'],
+  );
+  // Not counted again at each reading while the list fails.
+  const before = w.server.requests.length;
+  w.clock.advance(60_000);
+  await w.hub.refresh();
+  assert.equal(w.server.requests.length, before + 1, 'only "Recently added"');
+});
+
+test('the scene action reuses a fresh reading', async (t) => {
+  const w = await world(t);
+  const before = w.server.requests.length;
+  await w.fake.sceneAction('read_latest_additions', {});
+  assert.equal(w.server.requests.length, before);
+  w.clock.advance(10 * 60_000);
+  await w.fake.sceneAction('read_latest_additions', {});
+  assert.equal(w.server.requests.length, before + 1);
+});

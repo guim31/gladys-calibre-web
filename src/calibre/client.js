@@ -18,7 +18,7 @@ export const ERROR_KINDS = Object.freeze({
   UNREACHABLE: 'unreachable', // no answer: down, wrong address, firewall
   TLS: 'tls', // the certificate does not verify
   AUTH: 'auth', // user or password refused (401)
-  HIDDEN: 'hidden', // the list is hidden for this user (404/403)
+  HIDDEN: 'hidden', // the list is hidden for this user (404)
   NOT_CALIBRE: 'not_calibre', // something answers, not an OPDS catalog
   REDIRECT: 'redirect', // the address redirects (HTTP to HTTPS, a login page)
   HTTP: 'http', // any other HTTP error
@@ -81,6 +81,11 @@ export class CalibreClient {
         headers: this.authorization ? { Authorization: this.authorization } : {},
       });
     } catch (err) {
+      if (err.code === 'ETOOLARGE') {
+        throw new CalibreError(ERROR_KINDS.HTTP, `${path.split('?')[0]}: answer too large`, {
+          tooLarge: true,
+        });
+      }
       if (TLS_CODES.has(err.code)) {
         throw new CalibreError(ERROR_KINDS.TLS, `Certificate refused (${err.code})`);
       }
@@ -95,9 +100,9 @@ export class CalibreClient {
         { status },
       );
     }
-    // Calibre-Web answers 404 (403 for some lists) when the user's
-    // visibility settings hide a list.
-    if (status === 403 || status === 404) {
+    // Calibre-Web answers 404 when the user's visibility settings hide a
+    // list (a 403 rather comes from a reverse proxy: an HTTP error).
+    if (status === 404) {
       throw new CalibreError(ERROR_KINDS.HIDDEN, `${route}: HTTP ${status}`, { status });
     }
     if (status >= 300 && status < 400) {

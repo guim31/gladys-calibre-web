@@ -127,6 +127,8 @@ export class FakeCalibre {
     this.books = LIBRARY.map((book) => ({ ...book }));
     /** Lists hidden for the user (visibility settings): 'new', 'author', 'series'. */
     this.hidden = new Set();
+    /** Routes that answer HTTP 500. */
+    this.failing = new Set();
     this.covers = new Map(LIBRARY.map((book) => [book.id, COVER]));
     this.requests = [];
     this.automated = false;
@@ -182,6 +184,9 @@ export class FakeCalibre {
         headers: { 'www-authenticate': 'Basic realm="Login Required"' },
         body: '',
       };
+    }
+    if (this.failing.has(route)) {
+      return { status: 500, headers: {}, body: '<html>Internal Server Error</html>' };
     }
     const sorted = [...this.books].sort((a, b) => a.title.localeCompare(b.title));
     if (route === '/opds') {
